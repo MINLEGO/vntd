@@ -1,9 +1,9 @@
-import lbc
+import vntd
 
 
 def main() -> None:
     # Setup proxy1
-    proxy1 = lbc.Proxy(
+    proxy1 = vntd.Proxy(
         host="127.0.0.1",
         port=12345,
         username="username",
@@ -12,10 +12,10 @@ def main() -> None:
     )
 
     # Initialize client with proxy1
-    client = lbc.Client(proxy=proxy1)
+    client = vntd.Client(proxy=proxy1)
 
     # Setup proxy2
-    proxy2 = lbc.Proxy(
+    proxy2 = vntd.Proxy(
         host="127.0.0.1",
         port=23456,
     )

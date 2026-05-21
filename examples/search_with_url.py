@@ -1,22 +1,22 @@
-"""Search for ads on Leboncoin using a full search URL."""
+"""Search for items on Vinted using a full search URL."""
 
-import lbc
+import vntd
 
 
 def main() -> None:
-    # Initialize the Leboncoin API client
-    client = lbc.Client()
+    # Initialize the Vinted API client
+    client = vntd.Client()
 
-    # Perform a search using a prebuilt Leboncoin URL
+    # Perform a search using a prebuilt Vinted URL
     result = client.search(
-        url="https://www.leboncoin.fr/recherche?category=10&text=maison&locations=Paris__48.86023250788424_2.339006433295173_9256_30000",
+        url="https://www.vinted.fr/catalog?search_text=robe&order=newest_first&price_from=5&price_to=20",
         page=1,
-        limit=35,
+        limit=24,
     )
 
-    # Print basic info about each ad
+    # Print basic info about each item
     for ad in result.ads:
-        print(f"{ad.id} | {ad.url} | {ad.subject} | {ad.price}€ | Seller: {ad.user}")
+        print(f"{ad.id} | {ad.url} | {ad.title} | {ad.price}€ | Seller: {ad.user}")
 
 
 if __name__ == "__main__":

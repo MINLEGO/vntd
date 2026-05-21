@@ -1,21 +1,21 @@
-"""Get detailed information about a Leboncoin user using their user ID."""
+"""Get detailed information about a Vinted user using their user ID."""
 
-import lbc
+import vntd
 
 
 def main() -> None:
-    # Initialize the Leboncoin API client
-    client = lbc.Client()
+    # Initialize the Vinted API client
+    client = vntd.Client()
 
-    # Fetch a user by their Leboncoin user ID
+    # Fetch a user by their Vinted user ID
     # Replace the ID with a real one for testing
-    user = client.get_user("01234567-89ab-cdef-0123-456789abcdef")
+    user = client.get_user(80325437)
 
-    # Print raw user attributes
+    # Print user attributes
     print("User ID:", user.id)
-    print("Name:", user.name)
-    print("Pro status:", user.is_pro)
-    print("Ads count:", user.total_ads)
+    print("Login:", user.login)
+    print("Business account:", user.business)
+    print("Items count:", user.item_count)
 
 
 if __name__ == "__main__":

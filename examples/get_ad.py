@@ -1,22 +1,22 @@
-"""Get detailed information about an ad on Leboncoin using its ID."""
+"""Get detailed information about a Vinted item using its ID."""
 
-import lbc
+import vntd
 
 
 def main() -> None:
-    # Initialize the Leboncoin API client
-    client = lbc.Client()
+    # Initialize the Vinted API client
+    client = vntd.Client()
 
-    # Fetch an ad by its Leboncoin ID (replace with a real one for testing)
-    ad = client.get_ad("0123456789")
+    # Fetch an item by its Vinted ID (replace with a real one for testing)
+    ad = client.get_ad("8975084387")
 
-    # Print basic information about the ad
-    print("Title:", ad.subject)
+    # Print basic information about the item
+    print("Title:", ad.title)
     print("Price:", ad.price)
-    print("Favorites:", ad.favorites)
-    print("First published on:", ad.first_publication_date)
+    print("Brand:", ad.brand)
+    print("Description:", ad.description)
 
-    # Print information about the user who posted the ad
+    # Print information about the user who posted the item
     print("User info:", ad.user)
 
 
