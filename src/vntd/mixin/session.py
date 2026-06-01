@@ -2,6 +2,14 @@ from curl_cffi import requests, BrowserTypeLiteral
 import random
 
 from ..model import Proxy
+from ..exceptions import InvalidValue
+
+
+DEFAULT_USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+]
 
 
 class SessionMixin:
@@ -10,34 +18,46 @@ class SessionMixin:
         base_url: str,
         proxy: Proxy | None = None,
         impersonate: BrowserTypeLiteral = None,
+        user_agent: str | None = None,
+        user_agents: list[str] | None = None,
         request_verify: bool = True,
         **kwargs,
     ):
         self.base_url = base_url.rstrip("/")
+        self._user_agent = user_agent
+        self._user_agents = user_agents
         self.session = self._init_session(
             base_url=self.base_url,
             proxy=proxy,
             impersonate=impersonate,
+            user_agent=user_agent,
+            user_agents=user_agents,
             request_verify=request_verify,
         )
         self._proxy = proxy
         self._impersonate = impersonate
         super().__init__(**kwargs)
 
-    def _generate_user_agent(self) -> str:
-        return random.choice(
-            [
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-            ]
-        )
+    def _select_user_agent(
+        self, user_agent: str | None, user_agents: list[str] | None
+    ) -> str:
+        if user_agent and user_agents:
+            raise InvalidValue("Provide either user_agent or user_agents, not both.")
+        if user_agent:
+            return user_agent
+        if user_agents:
+            if not all(isinstance(value, str) for value in user_agents):
+                raise InvalidValue("user_agents must be a list of strings.")
+            return random.choice(user_agents)
+        return random.choice(DEFAULT_USER_AGENTS)
 
     def _init_session(
         self,
         base_url: str,
         proxy: Proxy | None = None,
         impersonate: BrowserTypeLiteral = None,
+        user_agent: str | None = None,
+        user_agents: list[str] | None = None,
         request_verify: bool = True,
     ) -> requests.Session:
         """
@@ -50,7 +70,7 @@ class SessionMixin:
 
         session.headers.update(
             {
-                "User-Agent": self._generate_user_agent(),
+                "User-Agent": self._select_user_agent(user_agent, user_agents),
                 "Accept": "application/json, text/plain, */*",
                 "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
                 "Origin": base_url,
