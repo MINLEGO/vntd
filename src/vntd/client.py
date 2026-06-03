@@ -12,6 +12,8 @@ class Client(SessionMixin, SearchMixin, UserMixin, AdMixin):
         base_url: str = "https://www.vinted.fr",
         proxy: Proxy | None = None,
         impersonate: BrowserTypeLiteral = None,
+        user_agent: str | None = None,
+        user_agents: list[str] | None = None,
         request_verify: bool = True,
         timeout: float = 30.0,
         max_retries: int = 3,
@@ -24,6 +26,8 @@ class Client(SessionMixin, SearchMixin, UserMixin, AdMixin):
             base_url (str, optional): Base Vinted domain to target (e.g., "https://www.vinted.fr"). Defaults to "https://www.vinted.fr".
             proxy (Proxy | None, optional): Proxy configuration to use for the client. If provided, it will be applied to all requests. Defaults to None.
             impersonate (BrowserTypeLiteral, optional): Browser type to impersonate for requests (e.g., "firefox", "chrome", "edge", "safari"). If None, a random browser type will be chosen.
+            user_agent (str | None, optional): Explicit User-Agent string to use for requests.
+            user_agents (list[str] | None, optional): List of User-Agent strings to rotate from.
             request_verify (bool, optional): Whether to verify SSL certificates when sending requests. Defaults to True.
             timeout (float, optional): Maximum time in seconds to wait for a request before timing out. Defaults to 30.
             max_retries (int, optional): Maximum number of times to retry a request in case of anti-bot failures. Defaults to 3.
@@ -34,6 +38,8 @@ class Client(SessionMixin, SearchMixin, UserMixin, AdMixin):
             base_url=self.base_url,
             proxy=proxy,
             impersonate=impersonate,
+            user_agent=user_agent,
+            user_agents=user_agents,
             request_verify=request_verify,
         )
 
@@ -87,6 +93,8 @@ class Client(SessionMixin, SearchMixin, UserMixin, AdMixin):
                     base_url=self.base_url,
                     proxy=self._proxy,
                     impersonate=self._impersonate,
+                    user_agent=self._user_agent,
+                    user_agents=self._user_agents,
                     request_verify=self.request_verify,
                 )  # Re-init session
                 return self._fetch(
