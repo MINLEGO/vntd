@@ -1,6 +1,7 @@
 # vntd
 
 **Unofficial client for the Vinted API.**
+**Fork of [lbc](https://pypi.org/project/lbc/) by [etienne-hd](https://pypi.org/user/etienne-hd/)**
 
 ```python
 import vntd

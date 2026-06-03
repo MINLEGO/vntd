@@ -1,11 +1,13 @@
-## 2.0.0
+## 1.0.0
 
-### Changed
+Initial release
 
 * Rewritten client to target Vinted APIs
 * Replaced Leboncoin-specific filters with Vinted-native search parameters
 * Updated models, examples, and documentation accordingly
 
+
+## Before fork :
 ## 1.1.3
 
 ### Changed
