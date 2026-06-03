@@ -1,6 +1,8 @@
 from curl_cffi import requests, BrowserTypeLiteral
 import random
 
+from fake_useragent import UserAgent
+
 from ..model import Proxy
 from ..exceptions import InvalidValue
 
@@ -10,6 +12,15 @@ DEFAULT_USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
 ]
+
+_UA = UserAgent(platforms=["desktop"])
+
+_BROWSER_MAP: dict[str | None, list[str]] = {
+    "chrome": ["Chrome"],
+    "firefox": ["Firefox"],
+    "safari": ["Safari"],
+    "edge": ["Edge"],
+}
 
 
 class SessionMixin:
@@ -39,7 +50,10 @@ class SessionMixin:
         super().__init__(**kwargs)
 
     def _select_user_agent(
-        self, user_agent: str | None, user_agents: list[str] | None
+        self,
+        user_agent: str | None,
+        user_agents: list[str] | None,
+        impersonate: BrowserTypeLiteral = None,
     ) -> str:
         if user_agent and user_agents:
             raise InvalidValue("Provide either user_agent or user_agents, not both.")
@@ -49,6 +63,15 @@ class SessionMixin:
             if not all(isinstance(value, str) for value in user_agents):
                 raise InvalidValue("user_agents must be a list of strings.")
             return random.choice(user_agents)
+
+        # Try fake-useragent with browser-coherent selection
+        try:
+            browsers = _BROWSER_MAP.get(impersonate, list(_BROWSER_MAP.values())[0])
+            browser = random.choice(browsers)
+            return getattr(_UA, browser.lower(), _UA.random)
+        except Exception:
+            pass
+
         return random.choice(DEFAULT_USER_AGENTS)
 
     def _init_session(
@@ -70,7 +93,9 @@ class SessionMixin:
 
         session.headers.update(
             {
-                "User-Agent": self._select_user_agent(user_agent, user_agents),
+                "User-Agent": self._select_user_agent(
+                    user_agent, user_agents, impersonate
+                ),
                 "Accept": "application/json, text/plain, */*",
                 "Accept-Language": "fr-FR,fr;q=0.9,en;q=0.8",
                 "Origin": base_url,

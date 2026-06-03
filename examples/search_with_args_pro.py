@@ -13,7 +13,7 @@ def main() -> None:
         page=1,
         limit=24,
         sort=vntd.Sort.NEWEST,
-        seller_type=vntd.SellerType.BUSINESS,
+        seller_type=vntd.SellerType.ALL,
         price=(5, 50),
     )
 
