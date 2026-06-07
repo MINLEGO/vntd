@@ -123,30 +123,27 @@ class TestAdModel(unittest.TestCase):
         self.assertIsNone(ad.brand)
 
 
-class TestAdUserLazyLoad(unittest.TestCase):
-    """Test the Ad.user lazy-loading property."""
+class TestAdUserProperty(unittest.TestCase):
+    """Test the Ad.user property — returns cached user without HTTP requests."""
 
-    def test_user_lazy_loads_on_first_access(self):
-        mock_client = MagicMock()
-        mock_user = User(
+    def test_user_returns_cached_user(self):
+        cached_user = User(
             id=42, login="seller", profile_url=None, business=False,
             feedback_count=None, feedback_reputation=None, item_count=None,
             total_items_count=None, followers_count=None, following_count=None,
             country_code=None, city=None, about=None, photo_url=None,
         )
-        mock_client.get_user.return_value = mock_user
-
+        mock_client = MagicMock()
         ad = Ad(
             id=1, title="T", description=None, price=10.0, currency="EUR",
             brand=None, size=None, status=None, url="u", images=[],
             favorite_count=None, view_count=None, category=None, color=None,
-            _client=mock_client, _user_id=42, _user=None,
+            _client=mock_client, _user_id=42, _user=cached_user,
         )
-
         user = ad.user
-        mock_client.get_user.assert_called_once_with(user_id=42)
         self.assertEqual(user.id, 42)
         self.assertEqual(user.login, "seller")
+        mock_client.get_user.assert_not_called()
 
     def test_user_returns_none_when_no_user_id(self):
         ad = Ad(
@@ -157,27 +154,16 @@ class TestAdUserLazyLoad(unittest.TestCase):
         )
         self.assertIsNone(ad.user)
 
-    def test_user_cached_after_first_access(self):
+    def test_user_returns_none_when_not_populated(self):
         mock_client = MagicMock()
-        mock_user = User(
-            id=1, login="u", profile_url=None, business=False,
-            feedback_count=None, feedback_reputation=None, item_count=None,
-            total_items_count=None, followers_count=None, following_count=None,
-            country_code=None, city=None, about=None, photo_url=None,
-        )
-        mock_client.get_user.return_value = mock_user
-
         ad = Ad(
             id=1, title="T", description=None, price=10.0, currency="EUR",
             brand=None, size=None, status=None, url="u", images=[],
             favorite_count=None, view_count=None, category=None, color=None,
-            _client=mock_client, _user_id=1, _user=None,
+            _client=mock_client, _user_id=42, _user=None,
         )
-
-        _ = ad.user
-        _ = ad.user  # second access
-        # get_user should only be called once
-        mock_client.get_user.assert_called_once()
+        self.assertIsNone(ad.user)
+        mock_client.get_user.assert_not_called()
 
 
 if __name__ == "__main__":

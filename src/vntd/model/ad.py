@@ -32,7 +32,7 @@ class Ad:
         price = float(price_amount) if price_amount is not None else None
 
         photos = raw.get("photos", [])
-        images = [photo.get("url") for photo in photos if photo.get("url")]
+        images = [photo.get("url") for photo in photos if photo.get("url")] #not the full size photo, the full size photo would be photo.get("full_size_url") 
         if not images and raw.get("photo", {}).get("url"):
             images = [raw.get("photo", {}).get("url")]
 
@@ -54,7 +54,7 @@ class Ad:
             color=None,
             _client=client,
             _user_id=raw_user.get("id"),
-            _user=None,
+            _user=User._build(raw_user) if raw_user.get("id") else None,
         )
 
     @staticmethod
@@ -104,6 +104,4 @@ class Ad:
 
     @property
     def user(self) -> User | None:
-        if self._user is None and self._user_id is not None:
-            self._user = self._client.get_user(user_id=self._user_id)
         return self._user

@@ -6,7 +6,7 @@ class User:
     id: int
     login: str
     profile_url: str | None
-    business: bool
+    business: bool | None
     feedback_count: int | None
     feedback_reputation: float | None
     item_count: int | None
@@ -25,7 +25,7 @@ class User:
             id=raw.get("id"),
             login=raw.get("login"),
             profile_url=raw.get("profile_url"),
-            business=bool(raw.get("business")),
+            business=raw.get("business"),
             feedback_count=raw.get("feedback_count"),
             feedback_reputation=raw.get("feedback_reputation"),
             item_count=raw.get("item_count"),

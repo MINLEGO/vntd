@@ -63,7 +63,9 @@ def build_search_params_with_args(
         if max_price is not None:
             params["price_to"] = max_price
     if limit*page > 960:
-        print("Warning: max item index exceeds 960, which seems to be the maximum provided by the Vinted API. You may receive an error")
+        raise InvalidValue("Max item index exceeds 960, ")
+    if limit > 96:
+        print("Warning: limit exceeds 96, vinted will automaticly cap at 96.")
 
     for key, value in filters.items():
         if value is None:

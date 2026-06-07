@@ -1,4 +1,9 @@
-"""Search for business sellers on Vinted."""
+"""Search for business sellers on Vinted.
+
+Demonstrates the two-tier access pattern for user data:
+- ad.user: cached partial user info from search (no extra HTTP requests)
+- client.get_user(id): full user profile with advanced fields (explicit HTTP call)
+"""
 
 import vntd
 
@@ -17,15 +22,26 @@ def main() -> None:
         price=(5, 50),
     )
 
-    # Display business seller stats
-    for ad in result.ads:
+    # Basic user info from search — no extra HTTP requests
+    for ad in result.ads[:5]:
         user = ad.user
-        if user and user.business:
+        if user:
             print(
                 f"Seller: {user.login} | "
-                f"Feedback: {user.feedback_score} | "
-                f"Items: {user.item_count}"
+                f"Profile: {user.profile_url} | "
+                f"Photo: {user.photo_url} | "
+                f"Business: {user.business}"
             )
+
+    # Full user data via client.get_user() — explicit and intentional
+    if result.ads:
+        ad = result.ads[0]
+        if ad.user:
+            full_user = client.get_user(ad.user.id)
+            print(f"\n--- Full profile for {full_user.login} ---")
+            print(f"Feedback score: {full_user.feedback_score}")
+            print(f"Items listed: {full_user.item_count}")
+            print(f"Followers: {full_user.followers_count}")
 
 
 if __name__ == "__main__":

@@ -10,8 +10,8 @@ def main() -> None:
     # Perform a search with various filters
     result = client.search(
         text="robe",  # Search keyword
-        page=3,
-        limit=480,  # Max results per page
+        page=1,
+        limit=24,  # Max results per page
         sort=vntd.Sort.PRICE_LOW_TO_HIGH,  # Sort by newest items
         price=(5, 30),  # Price range in euros
         brand_ids=[53, 54],  # Optional brand IDs
