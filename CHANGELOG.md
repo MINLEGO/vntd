@@ -1,3 +1,17 @@
+## 1.1.0
+
+### Changed
+
+* Update the tests
+* Updated the examples to reflect the new structure and features
+* use cached data for simple profile information instead of making an additional request to fetch the full user profile when accessing the `user` property of an ad. 
+
+### Added
+
+* Warning when the limit of item per page is > 96
+* Throws error when max item index in search is > 960
+
+
 ## 1.0.0
 
 Initial release

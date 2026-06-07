@@ -1,6 +1,6 @@
 [project]
 name = "vntd"
-version = "1.0.0"
+version = "1.1.0"
 description = "Unofficial client for Vinted API"
 readme = "README.md"
 license = "MIT"
