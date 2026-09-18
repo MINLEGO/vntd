@@ -86,7 +86,7 @@ class TestBuildSearchParamsWithArgs(unittest.TestCase):
 
     def test_catalog_ids_normalized_from_list(self):
         params = build_search_params_with_args(catalog_ids=[1, 2, 3])
-        self.assertEqual(params["catalog_ids"], "1,2,3")
+        self.assertEqual(params["attribute_ids[catalog]"], "1,2,3")
 
     def test_color_ids_normalized_from_list(self):
         params = build_search_params_with_args(color_ids=[10, 20])
@@ -94,15 +94,15 @@ class TestBuildSearchParamsWithArgs(unittest.TestCase):
 
     def test_brand_ids_normalized_from_list(self):
         params = build_search_params_with_args(brand_ids=[100])
-        self.assertEqual(params["brand_ids"], "100")
+        self.assertEqual(params["attribute_ids[brand]"], "100")
 
     def test_size_ids_normalized_from_tuple(self):
         params = build_search_params_with_args(size_ids=(5, 6, 7))
-        self.assertEqual(params["size_ids"], "5,6,7")
+        self.assertEqual(params["attribute_ids[size]"], "5,6,7")
 
     def test_none_filter_value_is_omitted(self):
         params = build_search_params_with_args(catalog_ids=None)
-        self.assertNotIn("catalog_ids", params)
+        self.assertNotIn("attribute_ids[catalog]", params)
 
     def test_multiple_filters_combined(self):
         params = build_search_params_with_args(
@@ -120,7 +120,7 @@ class TestBuildSearchParamsWithArgs(unittest.TestCase):
         self.assertEqual(params["is_business"], 1)
         self.assertEqual(params["order"], "price_high_to_low")
         self.assertEqual(params["user_id"], 42)
-        self.assertEqual(params["catalog_ids"], "1,2")
+        self.assertEqual(params["attribute_ids[catalog]"], "1,2")
         self.assertEqual(params["color_ids"], "3")
 
 
