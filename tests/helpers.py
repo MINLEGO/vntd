@@ -44,13 +44,21 @@ MOCK_AD_HTML = (
 # ---------------------------------------------------------------------------
 
 
-def _mock_response(status_code: int = 200, json_data=None, text_data: str = ""):
+def _mock_response(
+    status_code: int = 200,
+    json_data=None,
+    text_data: str = "",
+    headers: dict | None = None,
+    cookies: dict | None = None,
+):
     """Return a mock curl_cffi.Response."""
     resp = MagicMock()
     resp.status_code = status_code
     resp.ok = 200 <= status_code < 300
     resp.json.return_value = json_data if json_data is not None else {}
     resp.text = text_data
+    resp.headers = headers or {}
+    resp.cookies = cookies or {}
     return resp
 
 
