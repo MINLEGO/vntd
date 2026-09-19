@@ -4,6 +4,7 @@ import curl_cffi
 from .mixin import SessionMixin, SearchMixin, UserMixin, AdMixin
 from .model import Proxy
 from .exceptions import AccessDeniedError, RequestError, NotFoundError
+from .utils import derive_api_base_url, normalize_base_url
 
 
 class Client(SessionMixin, SearchMixin, UserMixin, AdMixin):
@@ -32,7 +33,8 @@ class Client(SessionMixin, SearchMixin, UserMixin, AdMixin):
             timeout (float, optional): Maximum time in seconds to wait for a request before timing out. Defaults to 30.
             max_retries (int, optional): Maximum number of times to retry a request in case of anti-bot failures. Defaults to 3.
         """
-        self.base_url = base_url.rstrip("/")
+        self.base_url = normalize_base_url(base_url)
+        self.api_base_url = derive_api_base_url(self.base_url)
 
         super().__init__(
             base_url=self.base_url,
@@ -55,6 +57,7 @@ class Client(SessionMixin, SearchMixin, UserMixin, AdMixin):
         params: dict | None = None,
         max_retries: int = -1,
         expect_json: bool = True,
+        headers: dict | None = None,
     ):
         """
         Internal method to send an HTTP request using the configured session.
@@ -66,6 +69,7 @@ class Client(SessionMixin, SearchMixin, UserMixin, AdMixin):
             params (dict | None, optional): Query string parameters. Defaults to None.
             max_retries (int, optional): Number of times to retry the request in case of failure. Defaults to 3.
             expect_json (bool, optional): Whether to parse the response as JSON. Defaults to True.
+            headers (dict | None, optional): Per-request headers to merge with the session headers.
 
         Raises:
             AccessDeniedError: Raised when the request is blocked by anti-bot protection (HTTP 403/429).
@@ -84,6 +88,7 @@ class Client(SessionMixin, SearchMixin, UserMixin, AdMixin):
             json=payload,
             verify=self.request_verify,
             timeout=self.timeout,
+            headers=headers,
         )
         if response.ok:
             return response.json() if expect_json else response.text

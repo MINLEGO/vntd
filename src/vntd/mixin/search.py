@@ -38,7 +38,8 @@ class SearchMixin:
 
         body = self._fetch(
             method="GET",
-            url=f"{self.base_url}/api/v2/catalog/items",
+            url=f"{self.api_base_url}/svc-catalogue/items",
             params=params,
+            headers=dict(self.session.headers),
         )
         return Search._build(raw=body, client=self)

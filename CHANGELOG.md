@@ -1,3 +1,16 @@
+## 1.2.0
+
+### Fixed
+
+* Move catalogue searches to Vinted's `/svc-catalogue/items` API endpoint.
+* Bootstrap and forward the anonymous session cookie and request headers needed by the catalogue API.
+
+### Changed
+
+* Preserve the public search API while translating legacy catalogue, status, brand, and size filters to `attribute_ids[...]` parameters.
+* Derive the `api.` host from the configured Vinted domain and normalize site bootstrapping to the `www.` host.
+
+
 ## 1.1.0
 
 ### Changed

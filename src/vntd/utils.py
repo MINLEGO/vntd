@@ -1,7 +1,60 @@
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, urlsplit, urlunsplit
 
 from .model import Sort, SellerType
 from .exceptions import InvalidValue
+
+
+LEGACY_SEARCH_FILTERS = {
+    "catalog_ids": "attribute_ids[catalog]",
+    "status_ids": "attribute_ids[status]",
+    "brand_ids": "attribute_ids[brand]",
+    "size_ids": "attribute_ids[size]",
+}
+
+
+def normalize_base_url(base_url: str) -> str:
+    """Normalize a Vinted base URL to its ``www`` site host."""
+    base_url = base_url.rstrip("/")
+    parsed = urlsplit(base_url)
+    if not parsed.scheme or not parsed.hostname:
+        return base_url
+
+    hostname = parsed.hostname.lower()
+    if not hostname.startswith("www."):
+        hostname = f"www.{hostname}"
+
+    if parsed.port is not None:
+        hostname = f"{hostname}:{parsed.port}"
+
+    return urlunsplit((parsed.scheme, hostname, "", "", ""))
+
+
+def derive_api_base_url(base_url: str) -> str:
+    """Derive the Vinted ``api`` host from a site URL."""
+    parsed = urlsplit(base_url.rstrip("/"))
+    if not parsed.scheme or not parsed.hostname:
+        return base_url.rstrip("/")
+
+    hostname = parsed.hostname.lower()
+    if hostname.startswith("www."):
+        hostname = f"api.{hostname[4:]}"
+    elif not hostname.startswith("api."):
+        hostname = f"api.{hostname}"
+
+    if parsed.port is not None:
+        hostname = f"{hostname}:{parsed.port}"
+
+    return urlunsplit((parsed.scheme, hostname, "", "", ""))
+
+
+def _translate_search_filter_names(params: dict) -> dict:
+    """Translate the legacy public filter names to catalogue attributes."""
+    translated = dict(params)
+    for legacy_name, catalogue_name in LEGACY_SEARCH_FILTERS.items():
+        if legacy_name in translated:
+            translated.setdefault(catalogue_name, translated[legacy_name])
+            del translated[legacy_name]
+    return translated
 
 
 def _normalize_list(value) -> str:
@@ -22,7 +75,7 @@ def build_search_params_with_url(url: str, limit: int = 24, page: int = 1) -> di
 
     params["page"] = page
     params["per_page"] = limit
-    return params
+    return _translate_search_filter_names(params)
 
 
 def build_search_params_with_args(
@@ -72,4 +125,4 @@ def build_search_params_with_args(
             continue
         params[key] = _normalize_list(value)
 
-    return params
+    return _translate_search_filter_names(params)

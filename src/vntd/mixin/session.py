@@ -1,5 +1,7 @@
 from curl_cffi import requests, BrowserTypeLiteral
+from html import unescape
 import random
+import re
 
 from fake_useragent import UserAgent
 
@@ -21,6 +23,43 @@ _BROWSER_MAP: dict[str | None, list[str]] = {
     "safari": ["Safari"],
     "edge": ["Edge"],
 }
+
+
+def _extract_csrf_token(html: str) -> str | None:
+    """Extract an optional CSRF token from common Vinted bootstrap markup."""
+    match = re.search(
+        r'<meta(?=[^>]*\bname=["\']csrf[-_]?token["\'])'
+        r'(?=[^>]*\bcontent=["\']([^"\']+))[^>]*>',
+        html,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    return unescape(match.group(1)) if match else None
+
+
+def _capture_bootstrap_identity(session, response) -> None:
+    """Attach bootstrap cookies and request tokens to the current session."""
+    access_token = response.cookies.get("access_token_web")
+    anon_id = response.headers.get("X-Anon-Id")
+    csrf_token = response.headers.get("X-Csrf-Token")
+    if not csrf_token:
+        csrf_token = _extract_csrf_token(response.text)
+
+    headers = session.headers
+
+    if access_token:
+        existing_cookie = headers.get("Cookie")
+        cookie_parts = [
+            part.strip()
+            for part in (existing_cookie or "").split(";")
+            if part.strip()
+            and not part.strip().lower().startswith("access_token_web=")
+        ]
+        cookie_parts.append(f"access_token_web={access_token}")
+        headers["Cookie"] = "; ".join(cookie_parts)
+    if anon_id:
+        headers["X-Anon-Id"] = anon_id
+    if csrf_token:
+        headers["X-Csrf-Token"] = csrf_token
 
 
 class SessionMixin:
@@ -105,7 +144,8 @@ class SessionMixin:
         if proxy:
             session.proxies = {"http": proxy.url, "https": proxy.url}
 
-        session.get(f"{base_url}/", verify=request_verify)  # Init cookies
+        response = session.get(f"{base_url}/", verify=request_verify)  # Init cookies
+        _capture_bootstrap_identity(session, response)
         return session
 
     @property

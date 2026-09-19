@@ -56,6 +56,35 @@ class TestProxySetter(unittest.TestCase):
         self.assertIn("https", client.session.proxies)
 
 
+class TestSessionBootstrap(unittest.TestCase):
+    """Test extraction of the anonymous identity from the landing page."""
+
+    @patch("curl_cffi.requests.Session")
+    def test_bootstrap_captures_cookie_anon_id_and_optional_csrf(self, mock_cls):
+        mock_session = MagicMock()
+        mock_session.headers = {}
+        mock_cls.return_value = mock_session
+        mock_session.get.return_value = _mock_response(
+            headers={"X-Anon-Id": "anon-123"},
+            cookies={"access_token_web": "token-123"},
+            text_data='<meta name="csrf-token" content="csrf-456">',
+        )
+
+        client = Client(base_url="https://vinted.fr")
+
+        self.assertEqual(client.base_url, "https://www.vinted.fr")
+        self.assertEqual(
+            mock_session.get.call_args.kwargs.get("verify"),
+            True,
+        )
+        self.assertEqual(mock_session.headers["X-Anon-Id"], "anon-123")
+        self.assertEqual(mock_session.headers["X-Csrf-Token"], "csrf-456")
+        self.assertEqual(
+            mock_session.headers["Cookie"],
+            "access_token_web=token-123",
+        )
+
+
 class TestUserAgentSelection(unittest.TestCase):
     """Test the SessionMixin._select_user_agent method with fake-useragent integration."""
 
