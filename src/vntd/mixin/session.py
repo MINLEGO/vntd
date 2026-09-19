@@ -1,6 +1,5 @@
 from curl_cffi import requests, BrowserTypeLiteral
 from html import unescape
-from http.cookies import SimpleCookie
 import random
 import re
 
@@ -26,104 +25,29 @@ _BROWSER_MAP: dict[str | None, list[str]] = {
 }
 
 
-def _header_value(headers, name: str) -> str | None:
-    """Read a response or session header without depending on its casing."""
-    if headers is None:
-        return None
-
-    try:
-        value = headers.get(name)
-    except (AttributeError, TypeError):
-        value = None
-    if isinstance(value, str):
-        return value
-
-    try:
-        for key, value in headers.items():
-            if str(key).lower() == name.lower() and isinstance(value, str):
-                return value
-    except (AttributeError, TypeError):
-        pass
-    return None
-
-
-def _cookie_value(cookies, name: str) -> str | None:
-    """Read one cookie from dict-like and cookie-jar containers."""
-    if cookies is None:
-        return None
-
-    try:
-        value = cookies.get(name)
-    except (AttributeError, KeyError, TypeError):
-        value = None
-    if isinstance(value, str):
-        return value
-
-    try:
-        for key, value in cookies.items():
-            if str(key) == name and isinstance(value, str):
-                return value
-    except (AttributeError, TypeError):
-        pass
-    return None
-
-
-def _extract_cookie(response, session, name: str) -> str | None:
-    """Extract a cookie from the response, session jar, or Set-Cookie header."""
-    for cookies in (
-        getattr(response, "cookies", None),
-        getattr(session, "cookies", None),
-    ):
-        value = _cookie_value(cookies, name)
-        if value:
-            return value
-
-    set_cookie = _header_value(getattr(response, "headers", None), "Set-Cookie")
-    if set_cookie:
-        parsed = SimpleCookie()
-        parsed.load(set_cookie)
-        morsel = parsed.get(name)
-        if morsel is not None:
-            return morsel.value
-    return None
-
-
 def _extract_csrf_token(html: str) -> str | None:
     """Extract an optional CSRF token from common Vinted bootstrap markup."""
-    if not isinstance(html, str) or not html:
-        return None
-
-    patterns = (
-        r'<meta[^>]+name=["\']csrf[-_]?token["\'][^>]+content=["\']([^"\']+)',
-        r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+name=["\']csrf[-_]?token["\']',
-        r'["\']csrf[-_]?token["\']\s*[:=]\s*["\']([^"\']+)',
-        r'["\']csrfToken["\']\s*[:=]\s*["\']([^"\']+)',
-        r'\bcsrf[-_]?token\b\s*[:=]\s*["\']([^"\']+)',
+    match = re.search(
+        r'<meta(?=[^>]*\bname=["\']csrf[-_]?token["\'])'
+        r'(?=[^>]*\bcontent=["\']([^"\']+))[^>]*>',
+        html,
+        flags=re.IGNORECASE | re.DOTALL,
     )
-    for pattern in patterns:
-        match = re.search(pattern, html, flags=re.IGNORECASE | re.DOTALL)
-        if match:
-            return unescape(match.group(1))
-    return None
+    return unescape(match.group(1)) if match else None
 
 
 def _capture_bootstrap_identity(session, response) -> None:
     """Attach bootstrap cookies and request tokens to the current session."""
-    access_token = _extract_cookie(response, session, "access_token_web")
-    anon_id = _header_value(getattr(response, "headers", None), "X-Anon-Id")
-    if not anon_id:
-        anon_id = _extract_cookie(response, session, "anon_id")
-
-    csrf_token = _header_value(getattr(response, "headers", None), "X-Csrf-Token")
+    access_token = response.cookies.get("access_token_web")
+    anon_id = response.headers.get("X-Anon-Id")
+    csrf_token = response.headers.get("X-Csrf-Token")
     if not csrf_token:
-        csrf_token = _extract_csrf_token(getattr(response, "text", ""))
+        csrf_token = _extract_csrf_token(response.text)
 
-    headers = getattr(session, "headers", None)
-    if headers is None:
-        return
+    headers = session.headers
 
     if access_token:
-        existing_cookie = _header_value(headers, "Cookie")
+        existing_cookie = headers.get("Cookie")
         cookie_parts = [
             part.strip()
             for part in (existing_cookie or "").split(";")
@@ -223,14 +147,6 @@ class SessionMixin:
         response = session.get(f"{base_url}/", verify=request_verify)  # Init cookies
         _capture_bootstrap_identity(session, response)
         return session
-
-    def _request_headers(self) -> dict | None:
-        """Copy session headers for requests that target another Vinted host."""
-        try:
-            headers = dict(self.session.headers)
-        except (AttributeError, TypeError, ValueError):
-            return None
-        return headers or None
 
     @property
     def proxy(self) -> Proxy:

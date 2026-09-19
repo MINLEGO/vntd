@@ -81,18 +81,15 @@ class Client(SessionMixin, SearchMixin, UserMixin, AdMixin):
         if max_retries == -1:
             max_retries = self.max_retries
 
-        request_kwargs = {
-            "method": method,
-            "url": url,
-            "params": params,
-            "json": payload,
-            "verify": self.request_verify,
-            "timeout": self.timeout,
-        }
-        if headers:
-            request_kwargs["headers"] = headers
-
-        response: curl_cffi.Response = self.session.request(**request_kwargs)
+        response: curl_cffi.Response = self.session.request(
+            method=method,
+            url=url,
+            params=params,
+            json=payload,
+            verify=self.request_verify,
+            timeout=self.timeout,
+            headers=headers,
+        )
         if response.ok:
             return response.json() if expect_json else response.text
         elif response.status_code in (403, 429):

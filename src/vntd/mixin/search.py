@@ -40,6 +40,6 @@ class SearchMixin:
             method="GET",
             url=f"{self.api_base_url}/svc-catalogue/items",
             params=params,
-            headers=self._request_headers(),
+            headers=dict(self.session.headers),
         )
         return Search._build(raw=body, client=self)

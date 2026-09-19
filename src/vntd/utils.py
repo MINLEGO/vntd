@@ -30,8 +30,8 @@ def normalize_base_url(base_url: str) -> str:
 
 
 def derive_api_base_url(base_url: str) -> str:
-    """Derive the Vinted ``api`` host from a normalized site URL."""
-    parsed = urlsplit(normalize_base_url(base_url))
+    """Derive the Vinted ``api`` host from a site URL."""
+    parsed = urlsplit(base_url.rstrip("/"))
     if not parsed.scheme or not parsed.hostname:
         return base_url.rstrip("/")
 
