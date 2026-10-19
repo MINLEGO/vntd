@@ -20,7 +20,7 @@ def _make_ad(**overrides) -> Ad:
     defaults = dict(
         id=1, title="T", description=None, price=10.0, currency="EUR",
         brand=None, size=None, status=None, condition=None, url="u", images=[],
-        favorite_count=None, view_count=None, category=None, color=None,
+        favorite_count=None, view_count=None, category=None, color=None, raw={},
         _client=MagicMock(), _user_id=None, _user=None,
     )
     defaults.update(overrides)
@@ -84,6 +84,15 @@ class TestAdModel(unittest.TestCase):
         self.assertEqual(ad.favorite_count, 5)
         self.assertEqual(ad.view_count, 120)
         self.assertEqual(ad._user_id, 42)
+
+    def test_build_from_search_keeps_raw(self):
+        raw = _sample_ad_search_raw()
+        self.assertIs(Ad._build_from_search(raw=raw, client=_search_client()).raw, raw)
+
+    def test_build_from_item_page_keeps_raw(self):
+        raw = _item_page_raw()
+        ad = Ad._build_from_item_page(raw=raw, url="u", client=MagicMock())
+        self.assertIs(ad.raw, raw)
 
     def test_build_from_search_without_brand_or_size(self):
         raw = _sample_ad_search_raw()

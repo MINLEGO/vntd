@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from vntd.client import Client
-from vntd.exceptions import InvalidValue, NotFoundError
+from vntd.exceptions import InvalidValue, NotFoundError, ParseError
 
 from tests.helpers import _mock_ad_html, _mock_response
 
@@ -144,15 +144,33 @@ class TestGetAdIntegration(unittest.TestCase):
         self.mock_session.request.return_value = _mock_response(
             text_data=_mock_ad_html(777)
         )
-        with self.assertRaises(NotFoundError):
+        with self.assertRaises(ParseError):
             self.client.get_ad(12345)
 
-    def test_get_ad_raises_not_found_when_no_item_data(self):
+    def test_get_ad_raises_parse_error_when_no_item_data(self):
         self.mock_session.request.return_value = _mock_response(
             text_data="<html><body>No data</body></html>"
         )
+        with self.assertRaises(ParseError):
+            self.client.get_ad(12345)
+
+    def test_get_ad_raises_not_found_on_404(self):
+        self.mock_session.request.return_value = _mock_response(status_code=404)
         with self.assertRaises(NotFoundError):
             self.client.get_ad(12345)
+
+    def test_get_ad_raises_parse_error_on_undecodable_chunk(self):
+        self.mock_session.request.return_value = _mock_response(
+            text_data=r'<script>self.__next_f.push([1,"\x"])</script>'
+        )
+        with self.assertRaises(ParseError):
+            self.client.get_ad(12345)
+
+    def test_get_ad_exposes_raw(self):
+        self._serve(12345)
+        raw = self.client.get_ad(12345).raw
+        self.assertEqual(raw["item"]["title"], "Test Vintage Jacket")
+        self.assertEqual(raw["attributes"]["brand"], "Nike")
 
     def test_get_ad_fetches_correct_url(self):
         self._serve(42)

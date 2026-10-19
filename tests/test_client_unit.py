@@ -7,6 +7,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from curl_cffi.requests.exceptions import ConnectionError as CurlConnectionError, Timeout
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
@@ -15,7 +17,9 @@ from vntd.exceptions import (
     AccessDeniedError,
     InvalidValue,
     NotFoundError,
+    ParseError,
     RequestError,
+    RequestTimeout,
 )
 
 from tests.helpers import _mock_response
@@ -117,6 +121,37 @@ class TestFetchRetryAndErrors(unittest.TestCase):
         self.mock_session.request.return_value = _mock_response(status_code=422)
 
         with self.assertRaises(RequestError):
+            self.client._fetch("GET", "https://www.vinted.fr/api/test")
+
+    # --- transport errors ---------------------------------------------------
+
+    def test_timeout_raises_request_timeout(self):
+        """A curl_cffi timeout becomes RequestTimeout, without retry."""
+        error = Timeout("timed out")
+        self.mock_session.request.side_effect = error
+
+        with self.assertRaises(RequestTimeout) as ctx:
+            self.client._fetch("GET", "https://www.vinted.fr/api/test")
+
+        self.assertIs(ctx.exception.__cause__, error)
+        self.assertEqual(self.mock_session.request.call_count, 1)
+
+    def test_connection_error_raises_request_error(self):
+        """Other transport errors become a plain RequestError."""
+        self.mock_session.request.side_effect = CurlConnectionError("refused")
+
+        with self.assertRaises(RequestError) as ctx:
+            self.client._fetch("GET", "https://www.vinted.fr/api/test")
+
+        self.assertNotIsInstance(ctx.exception, RequestTimeout)
+
+    def test_invalid_json_raises_parse_error(self):
+        """A 200 response whose body is not JSON raises ParseError."""
+        response = _mock_response()
+        response.json.side_effect = ValueError("bad json")
+        self.mock_session.request.return_value = response
+
+        with self.assertRaises(ParseError):
             self.client._fetch("GET", "https://www.vinted.fr/api/test")
 
     # --- happy path ---------------------------------------------------------

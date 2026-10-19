@@ -13,7 +13,9 @@ from vntd.exceptions import (
     AccessDeniedError,
     InvalidValue,
     NotFoundError,
+    ParseError,
     RequestError,
+    RequestTimeout,
     VintedError,
 )
 
@@ -36,8 +38,19 @@ class TestExceptionHierarchy(unittest.TestCase):
     def test_access_denied_is_also_vinted_error(self):
         self.assertTrue(issubclass(AccessDeniedError, VintedError))
 
+    def test_request_timeout_is_request_error(self):
+        self.assertTrue(issubclass(RequestTimeout, RequestError))
+
+    def test_parse_error_is_vinted_error_but_not_request_or_not_found(self):
+        self.assertTrue(issubclass(ParseError, VintedError))
+        self.assertFalse(issubclass(ParseError, RequestError))
+        self.assertFalse(issubclass(ParseError, NotFoundError))
+
     def test_all_exceptions_are_base_exceptions(self):
-        for exc_cls in (VintedError, RequestError, AccessDeniedError, NotFoundError, InvalidValue):
+        for exc_cls in (
+            VintedError, RequestError, AccessDeniedError, NotFoundError,
+            InvalidValue, ParseError, RequestTimeout,
+        ):
             self.assertTrue(issubclass(exc_cls, Exception))
 
 

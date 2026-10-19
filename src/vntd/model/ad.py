@@ -23,6 +23,8 @@ class Ad:
     view_count: int | None
     category: str | None
     color: str | None
+    # The JSON read to build the ad: the search item, or for get_ad the data decoded from the item page.
+    raw: dict = field(repr=False, compare=False)
 
     _client: Any = field(repr=False)
     _user_id: int | None = field(repr=False)
@@ -68,6 +70,7 @@ class Ad:
             view_count=raw.get("view_count"),
             category=None,
             color=None,
+            raw=raw,
             _client=client,
             _user_id=raw_user.get("id"),
             _user=User._build(raw_user) if raw_user.get("id") else None,
@@ -107,6 +110,7 @@ class Ad:
             view_count=None,
             category=raw.get("category"),
             color=attributes.get("color"),
+            raw=raw,
             _client=client,
             _user_id=int(seller_id) if seller_id else None,
             _user=None,

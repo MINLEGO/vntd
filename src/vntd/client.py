@@ -1,9 +1,16 @@
 from curl_cffi import BrowserTypeLiteral
 import curl_cffi
+from curl_cffi.requests.exceptions import RequestException, Timeout
 
 from .mixin import SessionMixin, SearchMixin, UserMixin, AdMixin
 from .model import Proxy
-from .exceptions import AccessDeniedError, RequestError, NotFoundError
+from .exceptions import (
+    AccessDeniedError,
+    NotFoundError,
+    ParseError,
+    RequestError,
+    RequestTimeout,
+)
 from .utils import derive_api_base_url, normalize_base_url
 
 
@@ -73,7 +80,10 @@ class Client(SessionMixin, SearchMixin, UserMixin, AdMixin):
 
         Raises:
             AccessDeniedError: Raised when the request is blocked by anti-bot protection (HTTP 403/429).
-            RequestError: Raised for any other non-successful HTTP response.
+            NotFoundError: Raised when the resource does not exist (HTTP 404/410).
+            RequestTimeout: Raised when the request times out.
+            RequestError: Raised for any other non-successful HTTP response or transport failure.
+            ParseError: Raised when a JSON response cannot be decoded.
 
         Returns:
             dict | str: Parsed JSON response from the server, or raw text if expect_json is False.
@@ -81,17 +91,27 @@ class Client(SessionMixin, SearchMixin, UserMixin, AdMixin):
         if max_retries == -1:
             max_retries = self.max_retries
 
-        response: curl_cffi.Response = self.session.request(
-            method=method,
-            url=url,
-            params=params,
-            json=payload,
-            verify=self.request_verify,
-            timeout=self.timeout,
-            headers=headers,
-        )
+        try:
+            response: curl_cffi.Response = self.session.request(
+                method=method,
+                url=url,
+                params=params,
+                json=payload,
+                verify=self.request_verify,
+                timeout=self.timeout,
+                headers=headers,
+            )
+        except Timeout as e:
+            raise RequestTimeout("The request timed out.") from e
+        except RequestException as e:
+            raise RequestError(f"The request failed: {e}") from e
         if response.ok:
-            return response.json() if expect_json else response.text
+            if not expect_json:
+                return response.text
+            try:
+                return response.json()
+            except ValueError as e:
+                raise ParseError("Unable to decode the response as JSON.") from e
         elif response.status_code in (403, 429):
             if max_retries > 0:
                 self.session = self._init_session(

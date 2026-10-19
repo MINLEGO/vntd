@@ -1,3 +1,17 @@
+## 1.4.0
+
+### Changed
+
+* **Breaking:** `get_ad` now raises `ParseError` instead of `NotFoundError` when the item page is fetched but its data cannot be decoded. `NotFoundError` is only raised for an HTTP 404/410.
+* JSON responses that cannot be decoded now raise `ParseError` instead of a `ValueError`.
+
+### Added
+
+* `ParseError(VintedError)`, raised when a response was fetched but cannot be decoded.
+* `RequestTimeout(RequestError)`, raised when a request times out. Other transport errors (connection, DNS, proxy) are raised as `RequestError`; the original exception is kept as `__cause__`.
+* `Ad.raw`, the JSON read to build the ad: the search item, or for `get_ad` the data decoded from the item page.
+
+
 ## 1.3.0
 
 ### Changed

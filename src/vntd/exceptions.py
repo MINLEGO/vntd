@@ -7,7 +7,11 @@ class InvalidValue(VintedError):
 
 
 class RequestError(VintedError):
-    """Raised when an HTTP request fails with a non-success status code."""
+    """Raised when an HTTP request fails, with a non-success status code or at the transport level."""
+
+
+class RequestTimeout(RequestError):
+    """Raised when a request times out."""
 
 
 class AccessDeniedError(RequestError):
@@ -15,4 +19,8 @@ class AccessDeniedError(RequestError):
 
 
 class NotFoundError(VintedError):
-    """Raised when a user or item is not found."""
+    """Raised when a user or item is not found (HTTP 404/410)."""
+
+
+class ParseError(VintedError):
+    """Raised when a response was fetched but its data could not be decoded."""

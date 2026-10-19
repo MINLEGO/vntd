@@ -2,7 +2,7 @@ import json
 import re
 
 from ..model import Ad
-from ..exceptions import InvalidValue, NotFoundError
+from ..exceptions import InvalidValue, ParseError
 
 # The item page ships its data as JSON strings pushed into `self.__next_f`.
 _FLIGHT_CHUNK = re.compile(r'self\.__next_f\.push\(\[1,("(?:[^"\\]|\\.)*")\]\)')
@@ -37,11 +37,14 @@ class AdMixin:
 
     def _extract_item_page(self, html: str, item_id: int) -> dict:
         """Collect the item data embedded in an item page (sold items included)."""
-        text = "".join(json.loads(chunk) for chunk in _FLIGHT_CHUNK.findall(html))
+        try:
+            text = "".join(json.loads(chunk) for chunk in _FLIGHT_CHUNK.findall(html))
+        except ValueError as e:
+            raise ParseError("Unable to decode the item page data.") from e
 
         item = self._find_object(text, f'{{"id":"{item_id}","seller_id"', "id", item_id)
         if not item:
-            raise NotFoundError("Unable to find item details.")
+            raise ParseError("Unable to find item details.")
 
         attributes = self._find_object(text, '{"attributes":[', "item_id", item_id)
         description = self._find_object(text, '{"description":"', "item_id", item_id)
