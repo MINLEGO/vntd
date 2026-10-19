@@ -199,4 +199,5 @@ cython_debug/
 .roo/
 AGENTS.md
 
-docs/
+docs/*
+!docs/adr/
