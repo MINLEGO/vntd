@@ -2,6 +2,16 @@ from dataclasses import dataclass
 
 
 @dataclass
+class Feedback:
+    overall_score: float | None
+    received_count: int | None
+
+    @property
+    def score(self) -> float | None:
+        return self.overall_score * 5 if self.overall_score else None
+
+
+@dataclass
 class User:
     id: int
     login: str
@@ -44,8 +54,33 @@ class User:
 
     @property
     def is_pro(self) -> bool:
-        return self.business
+        return bool(self.business)
+
+    @property
+    def account_type(self) -> str:
+        return "pro" if self.is_pro else "private"
+
+    @property
+    def profile_picture(self) -> str | None:
+        return self.photo_url
+
+    @property
+    def description(self) -> str | None:
+        return self.about
+
+    @property
+    def location(self) -> str | None:
+        if self.city and self.country_code:
+            return f"{self.city}, {self.country_code}"
+        return self.city or self.country_code or None
+
+    @property
+    def feedback(self) -> Feedback:
+        return Feedback(
+            overall_score=self.feedback_reputation,
+            received_count=self.feedback_count,
+        )
 
     @property
     def feedback_score(self) -> float | None:
-        return self.feedback_reputation * 5 if self.feedback_reputation else None
+        return self.feedback.score

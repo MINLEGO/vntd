@@ -37,7 +37,7 @@ class TestSearchModel(unittest.TestCase):
                 "per_page": 24,
             },
         }
-        search = Search._build(raw=raw, client=MagicMock())
+        search = Search._build(raw=raw, client=MagicMock(base_url="https://www.vinted.fr"))
         self.assertEqual(search.total, 100)
         self.assertEqual(len(search.ads), 1)
         self.assertEqual(search.ads[0].id, 999)
@@ -46,7 +46,7 @@ class TestSearchModel(unittest.TestCase):
 
     def test_build_from_raw_empty_items(self):
         raw = _empty_search_response()
-        search = Search._build(raw=raw, client=MagicMock())
+        search = Search._build(raw=raw, client=MagicMock(base_url="https://www.vinted.fr"))
         self.assertEqual(search.total, 0)
         self.assertEqual(len(search.ads), 0)
 

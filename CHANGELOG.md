@@ -1,3 +1,25 @@
+## 1.3.0
+
+### Changed
+
+* **Breaking:** `Ad.status` now tells where the listing stands (`"active"`, `"reserved"` or `"sold"`), as in lbc. The physical state of the item (e.g. "Très bon état") moved to the new `Ad.condition`.
+* `Ad.category` is now the item's catalogue category (e.g. "Midi") instead of the JSON-LD value (e.g. "Femmes Midi").
+* `get_ad` reads the item page data instead of the JSON-LD: it returns every photo of the item (not only the first one), and works on sold items instead of raising `NotFoundError`.
+* `Ad.url` returned by `search` is now absolute.
+* `User.is_pro` always returns a `bool`.
+
+### Added
+
+* `Ad.condition`, filled by `search` and `get_ad`.
+* `Ad.brand` and `Ad.size` are filled again by `search`, and `Ad.size`, `Ad.color`, `Ad.favorite_count` by `get_ad`.
+* `Ad.body` and `Ad.favorites`, aliases of `description` and `favorite_count`.
+* `User.feedback` (`overall_score`, `received_count`, `score`), `User.location`, `User.account_type`, and the aliases `User.profile_picture` and `User.description`.
+
+### Fixed
+
+* `Ad.user` loads the seller on first access when the ad comes from `get_ad`, instead of always being `None` (the `seller_id` was never found).
+
+
 ## 1.2.0
 
 ### Fixed

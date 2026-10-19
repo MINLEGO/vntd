@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from vntd.client import Client
 from vntd.exceptions import InvalidValue, NotFoundError
 
-from tests.helpers import MOCK_AD_HTML, _mock_response
+from tests.helpers import _mock_ad_html, _mock_response
 
 
 # ---------------------------------------------------------------------------
@@ -103,30 +103,51 @@ class TestGetAdIntegration(unittest.TestCase):
         self.mock_session.get.return_value = _mock_response()
         self.client = Client(base_url="https://www.vinted.fr")
 
-    def test_get_ad_with_url_extracts_id_and_parses(self):
+    def _serve(self, item_id: int, **item_overrides) -> None:
         self.mock_session.request.return_value = _mock_response(
-            text_data=MOCK_AD_HTML
+            text_data=_mock_ad_html(item_id, **item_overrides)
         )
+
+    def test_get_ad_with_url_extracts_id_and_parses(self):
+        self._serve(12345678)
         ad = self.client.get_ad("https://www.vinted.fr/items/12345678-some-slug")
         self.assertEqual(ad.id, 12345678)
         self.assertEqual(ad.title, "Test Vintage Jacket")
 
     def test_get_ad_with_integer_id(self):
-        self.mock_session.request.return_value = _mock_response(
-            text_data=MOCK_AD_HTML
-        )
+        self._serve(99999)
         ad = self.client.get_ad(99999)
         self.assertEqual(ad.id, 99999)
         self.assertAlmostEqual(ad.price, 35.0)
 
     def test_get_ad_extracts_seller_id(self):
-        self.mock_session.request.return_value = _mock_response(
-            text_data=MOCK_AD_HTML
-        )
-        ad = self.client.get_ad(12345)
-        self.assertEqual(ad._user_id, 67890)
+        self._serve(12345)
+        self.assertEqual(self.client.get_ad(12345)._user_id, 67890)
 
-    def test_get_ad_raises_not_found_when_no_json_ld(self):
+    def test_get_ad_extracts_page_fields(self):
+        self._serve(12345)
+        ad = self.client.get_ad(12345)
+        self.assertEqual(ad.description, 'A "beautiful" vintage jacket')
+        self.assertEqual(ad.brand, "Nike")
+        self.assertEqual(ad.size, "M")
+        self.assertEqual(ad.condition, "Très bon état")
+        self.assertEqual(ad.color, "Bleu")
+        self.assertEqual(ad.favorite_count, 7)
+        self.assertEqual(ad.category, "Vestes")
+        self.assertEqual(len(ad.images), 2)
+
+    def test_get_ad_sold_item_does_not_raise(self):
+        self._serve(12345, can_buy=False)
+        self.assertEqual(self.client.get_ad(12345).status, "sold")
+
+    def test_get_ad_ignores_data_of_other_items(self):
+        self.mock_session.request.return_value = _mock_response(
+            text_data=_mock_ad_html(777)
+        )
+        with self.assertRaises(NotFoundError):
+            self.client.get_ad(12345)
+
+    def test_get_ad_raises_not_found_when_no_item_data(self):
         self.mock_session.request.return_value = _mock_response(
             text_data="<html><body>No data</body></html>"
         )
@@ -134,9 +155,7 @@ class TestGetAdIntegration(unittest.TestCase):
             self.client.get_ad(12345)
 
     def test_get_ad_fetches_correct_url(self):
-        self.mock_session.request.return_value = _mock_response(
-            text_data=MOCK_AD_HTML
-        )
+        self._serve(42)
         self.client.get_ad(42)
         url = self.mock_session.request.call_args.kwargs["url"]
         self.assertEqual(url, "https://www.vinted.fr/items/42")

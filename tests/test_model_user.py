@@ -62,6 +62,36 @@ class TestUserModel(unittest.TestCase):
         # 0.0 is falsy, so feedback_score returns None
         self.assertIsNone(user.feedback_score)
 
+    def test_is_pro_is_a_bool_when_business_is_unknown(self):
+        self.assertIs(self._make_user(business=None).is_pro, False)
+
+    def test_account_type(self):
+        self.assertEqual(self._make_user(business=True).account_type, "pro")
+        self.assertEqual(self._make_user(business=False).account_type, "private")
+
+    def test_aliases(self):
+        user = self._make_user(about="Hello", photo_url="https://example.com/p.jpg")
+        self.assertEqual(user.description, "Hello")
+        self.assertEqual(user.profile_picture, "https://example.com/p.jpg")
+
+    def test_feedback(self):
+        user = self._make_user(feedback_reputation=0.8, feedback_count=12)
+        self.assertEqual(user.feedback.received_count, 12)
+        self.assertAlmostEqual(user.feedback.overall_score, 0.8)
+        self.assertAlmostEqual(user.feedback.score, 4.0)
+        self.assertAlmostEqual(user.feedback_score, 4.0)
+
+    def test_feedback_score_none_without_reputation(self):
+        self.assertIsNone(self._make_user().feedback.score)
+
+    def test_location(self):
+        self.assertEqual(
+            self._make_user(city="Paris", country_code="FR").location, "Paris, FR"
+        )
+        self.assertEqual(self._make_user(city="", country_code="FR").location, "FR")
+        self.assertEqual(self._make_user(city="Paris").location, "Paris")
+        self.assertIsNone(self._make_user().location)
+
     def test_build_from_raw(self):
         raw = _sample_user_raw()
         user = User._build(raw)

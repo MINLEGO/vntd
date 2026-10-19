@@ -1,9 +1,12 @@
-from html import unescape
 import json
 import re
 
 from ..model import Ad
 from ..exceptions import InvalidValue, NotFoundError
+
+# The item page ships its data as JSON strings pushed into `self.__next_f`.
+_FLIGHT_CHUNK = re.compile(r'self\.__next_f\.push\(\[1,("(?:[^"\\]|\\.)*")\]\)')
+_DECODER = json.JSONDecoder()
 
 
 class AdMixin:
@@ -15,14 +18,8 @@ class AdMixin:
         url = f"{self.base_url}/items/{item_id}"
 
         html = self._fetch_text(url)
-        ld_data = self._extract_json_ld(html)
-        if not ld_data:
-            raise NotFoundError("Unable to find item details.")
-
-        seller_id = self._extract_seller_id(html)
-        return Ad._build_from_item_page(
-            raw=ld_data, item_id=item_id, url=url, seller_id=seller_id, client=self
-        )
+        raw = self._extract_item_page(html, item_id)
+        return Ad._build_from_item_page(raw=raw, url=url, client=self)
 
     def _extract_item_id(self, ad_id: str | int) -> int:
         if isinstance(ad_id, int):
@@ -38,17 +35,48 @@ class AdMixin:
 
         raise InvalidValue("ad_id must be a Vinted item ID or item URL.")
 
-    def _extract_json_ld(self, html: str) -> dict | None:
-        match = re.search(
-            r'<script type="application/ld\+json">(.*?)</script>',
-            html,
-            re.DOTALL,
-        )
-        if not match:
-            return None
-        raw_json = unescape(match.group(1)).strip()
-        return json.loads(raw_json)
+    def _extract_item_page(self, html: str, item_id: int) -> dict:
+        """Collect the item data embedded in an item page (sold items included)."""
+        text = "".join(json.loads(chunk) for chunk in _FLIGHT_CHUNK.findall(html))
 
-    def _extract_seller_id(self, html: str) -> int | None:
-        match = re.search(r'\\"seller_id\\":(\d+)', html)
-        return int(match.group(1)) if match else None
+        item = self._find_object(text, f'{{"id":"{item_id}","seller_id"', "id", item_id)
+        if not item:
+            raise NotFoundError("Unable to find item details.")
+
+        attributes = self._find_object(text, '{"attributes":[', "item_id", item_id)
+        description = self._find_object(text, '{"description":"', "item_id", item_id)
+        favourites = self._find_object(text, '{"favourite_count":', "item_id", item_id)
+
+        category = None
+        crumbs = re.search(r'"breadcrumbs":(\[)', text)
+        if crumbs:
+            # The last crumb is a brand shortcut (".../brand/..."), not a category.
+            titles = [
+                crumb["title"]
+                for crumb in _DECODER.raw_decode(text, crumbs.start(1))[0]
+                if "/brand/" not in crumb.get("url", "")
+            ]
+            category = titles[-1] if titles else None
+
+        return {
+            "item": item,
+            "attributes": {
+                attribute["code"]: attribute["data"].get("value")
+                for attribute in (attributes or {}).get("attributes", [])
+            },
+            "description": (description or {}).get("description"),
+            "favourite_count": (favourites or {}).get("favourite_count"),
+            "category": category,
+        }
+
+    @staticmethod
+    def _find_object(text: str, prefix: str, key: str, item_id: int) -> dict | None:
+        """Decode the first JSON object starting with `prefix` whose `key` is `item_id`."""
+        for match in re.finditer(re.escape(prefix), text):
+            try:
+                obj, _ = _DECODER.raw_decode(text, match.start())
+            except ValueError:
+                continue
+            if str(obj.get(key)) == str(item_id):
+                return obj
+        return None

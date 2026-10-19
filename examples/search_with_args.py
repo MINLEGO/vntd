@@ -19,7 +19,7 @@ def main() -> None:
 
     # Display summary of each item
     for ad in result.ads:
-        print(f"{ad.id} | {ad.url} | {ad.title} | {ad.price}€ ")
+        print(f"{ad.id} | {ad.url} | {ad.title} | {ad.price}€ | {ad.brand}")
 
 
 if __name__ == "__main__":
