@@ -70,6 +70,13 @@ user = client.get_user(80325437)
 print(user.login, user.feedback_score, user.item_count)
 ```
 
+### Get User Ads
+```python
+result = client.get_user_ads(80325437, page=1, limit=24, sort=vntd.Sort.NEWEST)
+print(result.total, [ad.title for ad in result.ads])
+```
+Only the ads currently on sale are returned; sold ones are not (`get_ad` still works on them). An unknown user gives an empty result.
+
 ### Proxy
 ```python
 proxy = vntd.Proxy(host="127.0.0.1", port=12345)

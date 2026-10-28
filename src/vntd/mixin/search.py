@@ -11,7 +11,6 @@ class SearchMixin:
         page: int = 1,
         limit: int = 24,
         seller_type: SellerType = SellerType.ALL,
-        user_id: int | None = None,
         price: tuple[int | None, int | None] | list[int | None] | None = None,
         **filters,
     ) -> Search:
@@ -31,7 +30,6 @@ class SearchMixin:
                 page=page,
                 limit=limit,
                 seller_type=seller_type,
-                user_id=user_id,
                 price=price,
                 **filters,
             )

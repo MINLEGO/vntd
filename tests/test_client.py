@@ -56,6 +56,11 @@ class VintedClientTests(unittest.TestCase):
         self.assertEqual(user.id, self.sample_user_id)
         self.assertTrue(user.login)
 
+    def test_get_user_ads(self) -> None:
+        result = self.client.get_user_ads(self.sample_user_id, limit=5)
+        self.assertGreater(len(result.ads), 0)
+        self.assertEqual({ad._user_id for ad in result.ads}, {self.sample_user_id})
+
     def test_ad_user_lookup(self) -> None:
         user = self.sample_ad.user
         self.assertIsNotNone(user)

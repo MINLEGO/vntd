@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from vntd.client import Client
+from vntd.exceptions import InvalidValue
 from vntd.model.enums import SellerType, Sort
 from vntd.model.search import Search
 
@@ -67,11 +68,9 @@ class TestSearchIntegration(unittest.TestCase):
         params = self.mock_session.request.call_args.kwargs["params"]
         self.assertEqual(params["is_business"], 1)
 
-    def test_search_user_id_params(self):
-        self._setup_search_response()
-        self.client.search(user_id=123)
-        params = self.mock_session.request.call_args.kwargs["params"]
-        self.assertEqual(params["user_id"], 123)
+    def test_search_user_id_raises(self):
+        with self.assertRaises(InvalidValue):
+            self.client.search(user_id=123)
 
     def test_search_sort_order_params(self):
         self._setup_search_response()

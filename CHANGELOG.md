@@ -1,3 +1,14 @@
+## 1.5.0
+
+### Added
+
+* `get_user_ads(user_id, page, limit, sort)`, returns the ads a user currently has on sale as a `Search`.
+
+### Changed
+
+* **Breaking:** `search()` no longer takes `user_id`. Vinted's search endpoint ignored it, so it never filtered anything. Passing it now raises `InvalidValue`; use `get_user_ads` instead.
+
+
 ## 1.4.0
 
 ### Changed

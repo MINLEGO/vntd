@@ -68,13 +68,9 @@ class TestBuildSearchParamsWithArgs(unittest.TestCase):
         params = build_search_params_with_args(seller_type=SellerType.ALL)
         self.assertNotIn("is_business", params)
 
-    def test_user_id_adds_param(self):
-        params = build_search_params_with_args(user_id=123)
-        self.assertEqual(params["user_id"], 123)
-
-    def test_user_id_none_omits_param(self):
-        params = build_search_params_with_args(user_id=None)
-        self.assertNotIn("user_id", params)
+    def test_user_id_raises(self):
+        with self.assertRaises(InvalidValue):
+            build_search_params_with_args(user_id=123)
 
     def test_sort_sets_order_value(self):
         params = build_search_params_with_args(sort=Sort.PRICE_LOW_TO_HIGH)
@@ -110,7 +106,6 @@ class TestBuildSearchParamsWithArgs(unittest.TestCase):
             price=(10, 100),
             seller_type=SellerType.BUSINESS,
             sort=Sort.PRICE_HIGH_TO_LOW,
-            user_id=42,
             catalog_ids=[1, 2],
             color_ids=[3],
         )
@@ -119,7 +114,6 @@ class TestBuildSearchParamsWithArgs(unittest.TestCase):
         self.assertEqual(params["price_to"], 100)
         self.assertEqual(params["is_business"], 1)
         self.assertEqual(params["order"], "price_high_to_low")
-        self.assertEqual(params["user_id"], 42)
         self.assertEqual(params["attribute_ids[catalog]"], "1,2")
         self.assertEqual(params["color_ids"], "3")
 

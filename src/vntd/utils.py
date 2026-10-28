@@ -84,10 +84,12 @@ def build_search_params_with_args(
     page: int = 1,
     limit: int = 24,
     seller_type: SellerType = SellerType.ALL,
-    user_id: int | None = None,
     price: tuple[int | None, int | None] | list[int | None] | None = None,
     **filters,
 ) -> dict:
+    if "user_id" in filters:
+        raise InvalidValue("user_id is not a search filter, use get_user_ads().")
+
     params: dict = {
         "page": page,
         "per_page": limit,
@@ -103,9 +105,6 @@ def build_search_params_with_args(
         params["is_business"] = 1
     elif seller_type == SellerType.INDIVIDUAL:
         params["is_business"] = 0
-
-    if user_id is not None:
-        params["user_id"] = user_id
 
     if price is not None:
         if not isinstance(price, (list, tuple)) or len(price) != 2:
