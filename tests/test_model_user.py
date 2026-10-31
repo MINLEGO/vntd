@@ -33,6 +33,7 @@ class TestUserModel(unittest.TestCase):
             "city": None,
             "about": None,
             "photo_url": None,
+            "raw": {},
         }
         defaults.update(overrides)
         return User(**defaults)
@@ -91,6 +92,10 @@ class TestUserModel(unittest.TestCase):
         self.assertEqual(self._make_user(city="", country_code="FR").location, "FR")
         self.assertEqual(self._make_user(city="Paris").location, "Paris")
         self.assertIsNone(self._make_user().location)
+
+    def test_build_keeps_raw(self):
+        raw = _sample_user_raw()
+        self.assertIs(User._build(raw).raw, raw)
 
     def test_build_from_raw(self):
         raw = _sample_user_raw()

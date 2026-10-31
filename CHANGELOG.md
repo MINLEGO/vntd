@@ -1,3 +1,10 @@
+## 1.6.0
+
+### Added
+
+* `User.raw`, the JSON read to build the user: the user object embedded in a search item, or for `get_user` the `user` of `/users/{id}`.
+
+
 ## 1.5.0
 
 ### Added

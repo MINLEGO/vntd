@@ -198,7 +198,7 @@ class TestAdUserProperty(unittest.TestCase):
             id=42, login="seller", profile_url=None, business=False,
             feedback_count=None, feedback_reputation=None, item_count=None,
             total_items_count=None, followers_count=None, following_count=None,
-            country_code=None, city=None, about=None, photo_url=None,
+            country_code=None, city=None, about=None, photo_url=None, raw={},
         )
 
     def test_user_returns_cached_user(self):

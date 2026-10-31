@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -27,6 +27,8 @@ class User:
     city: str | None
     about: str | None
     photo_url: str | None
+    # The JSON read to build the user: the user object embedded in a search item, or for get_user the `user` of /users/{id}.
+    raw: dict = field(repr=False, compare=False)
 
     @staticmethod
     def _build(raw: dict) -> "User":
@@ -46,6 +48,7 @@ class User:
             city=raw.get("city"),
             about=raw.get("about"),
             photo_url=photo.get("url"),
+            raw=raw,
         )
 
     @property
